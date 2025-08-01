@@ -1,1 +1,0 @@
-{"columns": ["longitude", "latitude", "housing_median_age", "total_rooms", "total_bedrooms", "population", "households", "median_income", "ocean_proximity", "rooms_per_household", "bedrooms_per_room"], "data": [[-119.01, 36.06, 25.0, 1505.0, 435.0, 1392.0, 359.0, 1.6812, "INLAND", 4.192200557103064, 0.28903654485049834]]}
