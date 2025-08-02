@@ -1,44 +1,44 @@
-import mlflow
 import uvicorn
+import mlflow
+import requests
 import pandas as pd
-from datamodels import HouseFeatures
+from src.datamodels import HouseFeatures
 from fastapi import FastAPI, HTTPException
+import os
 
 app = FastAPI(
     title="Housing Price Prediction API",
     description="An API to predict housing prices using the best registered ML model.",
     version="1.0.0"
 )
-
-model_name = "best_model_auto"
-model_stage = "Production"
-model_uri = f"models:/{model_name}/{model_stage}"
-
-try:
-    print(f"Loading model from: {model_uri}")
-    model = mlflow.pyfunc.load_model(model_uri)
-    print(f"Successfully loaded model '{model_name}' stage '{model_stage}'")
-except Exception as e:
-    print(f"Error loading model: {e}")
-    model = None
+# Get MLflow model URL from environment variable
+MLFLOW_MODEL_URL = os.environ.get("MLFLOW_MODEL_URL", "http://localhost:1234/invocations")
 
 @app.post("/predict")
 def predict(features: HouseFeatures):
     """
     Accepts housing features via JSON and returns a prediction.
     """
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded or available.")
     try:
         # Convert the Pydantic model to a pandas DataFrame, as the model expects it.
         input_df = pd.DataFrame([features.model_dump()])
+        input_df["rooms_per_household"] = input_df["total_rooms"] / input_df["households"]
+        input_df["bedrooms_per_room"] = input_df["total_bedrooms"] / input_df["total_rooms"]
 
-        # Make a prediction using the loaded model.
-        prediction = model.predict(input_df)
+         # Format as MLflow expects: dataframe_split orientation
+        payload = {"dataframe_split": input_df.to_dict(orient="split")}
 
-        # Return the prediction in a JSON response.
-        return {"predicted_median_house_value": prediction[0]}
+        # Send request to MLflow model server
+        response = requests.post(MLFLOW_MODEL_URL, json=payload)
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"MLflow prediction error: {response.text}")
+
+        prediction = response.json()
+        return {"predicted_median_house_value": prediction}
+
     except Exception as e:
+        raise e
         raise HTTPException(status_code=500, detail=f"An error occurred during prediction: {e}")
 
 

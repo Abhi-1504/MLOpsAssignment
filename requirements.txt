@@ -6,4 +6,5 @@ dvc
 fastapi
 uvicorn[standard]
 pydantic
+requests
 

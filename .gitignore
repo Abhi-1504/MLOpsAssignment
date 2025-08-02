@@ -8,6 +8,6 @@ venv/
 .env
 .venv
 mlruns/
-models/*.pkl
 *.log
 .pytest_cache/
+data/raw/*.csv
