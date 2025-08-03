@@ -12,3 +12,4 @@ mlruns/
 .pytest_cache/
 data/raw/*.csv
 mlflow.db
+.dvc/confi.local
