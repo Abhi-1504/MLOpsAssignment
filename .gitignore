@@ -11,3 +11,4 @@ mlruns/
 *.log
 .pytest_cache/
 data/raw/*.csv
+mlflow.db
