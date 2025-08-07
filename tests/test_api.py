@@ -15,39 +15,32 @@ from src.datamodels import HouseFeatures
 # --- 1. API Integration Test ---
 
 def test_predict_endpoint_success(mocker):
-    """
-    Tests if the /predict endpoint returns a successful response (status code 200)
-    with valid input data. This test mocks the MLflow model loading.
-    """
-    # --- MOCKING THE MODEL ---
     mock_model = MagicMock()
     mock_model.predict.return_value = [250000.0]
-
-    # Patch before TestClient triggers startup event
+    
+    # Patch before startup loads the model
     mocker.patch('src.app.mlflow.pyfunc.load_model', return_value=mock_model)
 
-    # Initialize client after mocking
-    client = TestClient(app)
+    # Use TestClient in context to trigger startup AFTER patching
+    with TestClient(app) as client:
+        sample_payload = {
+            "longitude": -122.23,
+            "latitude": 37.88,
+            "housing_median_age": 41.0,
+            "total_rooms": 880.0,
+            "total_bedrooms": 129.0,
+            "population": 322.0,
+            "households": 126.0,
+            "median_income": 8.3252,
+            "ocean_proximity": "NEAR BAY"
+        }
 
-    sample_payload = {
-        "longitude": -122.23,
-        "latitude": 37.88,
-        "housing_median_age": 41.0,
-        "total_rooms": 880.0,
-        "total_bedrooms": 129.0,
-        "population": 322.0,
-        "households": 126.0,
-        "median_income": 8.3252,
-        "ocean_proximity": "NEAR BAY"
-    }
+        response = client.post("/predict", json=sample_payload)
 
-    response = client.post("/predict", json=sample_payload)
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["predicted_median_house_value"] == 250000.0
 
-    assert response.status_code == 200
-
-    response_json = response.json()
-    assert "predicted_median_house_value" in response_json
-    assert response_json["predicted_median_house_value"] == 250000.0
 
 def test_predict_endpoint_invalid_input():
     """
