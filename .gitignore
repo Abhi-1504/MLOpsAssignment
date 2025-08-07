@@ -8,14 +8,8 @@ venv/
 .env
 .venv
 mlruns/
-<<<<<<< HEAD
 *.log
 .pytest_cache/
 data/raw/*.csv
 mlflow.db
 .dvc/confi.local
-=======
-models/*.pkl
-*.log
-.pytest_cache/
->>>>>>> 00df1927d4e25741b6b49e9f75a77c3b3f058e03
