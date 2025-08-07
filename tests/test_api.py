@@ -5,7 +5,7 @@ import sys
 import os
 
 # Add the root directory of the project to the Python path
-# This allows us to import modules like 'app' and 'datamodels'
+# This allows us to import modules from the 'src' directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Now we can import from our source files
@@ -107,4 +107,3 @@ def test_feature_engineering():
     # Assert that the calculations are correct
     assert engineered_df['rooms_per_household'].iloc[0] == 5.0  # 1000 / 200
     assert engineered_df['bedrooms_per_room'].iloc[1] == 0.25 # 500 / 2000
-
