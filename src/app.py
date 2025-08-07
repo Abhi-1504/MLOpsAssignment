@@ -1,7 +1,7 @@
 import mlflow
 import uvicorn
 import pandas as pd
-from datamodels import HouseFeatures
+from src.datamodels import HouseFeatures
 from fastapi import FastAPI, HTTPException
 import os
 
