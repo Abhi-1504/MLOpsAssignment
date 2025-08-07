@@ -1,5 +1,4 @@
 name: CI - Lint and Test
-
 # Trigger this workflow on every pull request to the main branch
 on:
   pull_request:
@@ -9,26 +8,32 @@ jobs:
   lint-and-test:
     # Use the standard GitHub-hosted runner
     runs-on: ubuntu-latest
-
+    
     steps:
       # Step 1: Check out the code from the repository
       - name: Checkout code
         uses: actions/checkout@v3
-
+        
       # Step 2: Set up a Python environment
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-
+          
       # Step 3: Install project dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 pytest 
-
-      # Step 4: Run the linter (flake8)
+          pip install flake8 pytest pytest-mock
+          
+      # Step 4: Set environment variables for testing
+      - name: Set environment variables
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "MLFLOW_TRACKING_URI=http://localhost:5000" >> $GITHUB_ENV
+          
+      # Step 5: Run the linter (flake8)
       # This checks your code for style issues and simple errors.
       - name: Lint with flake8
         run: |
@@ -36,10 +41,9 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-      # Step 5: Run tests with pytest
+          
+      # Step 6: Run tests with pytest
       # This will automatically discover and run any tests in your 'tests/' directory.
-      # You will need to create some simple tests for this to be effective.
       - name: Test with pytest
         run: |
-          pytest
+          pytest tests/ -v --tb=short
