@@ -57,9 +57,8 @@ def predict(features: HouseFeatures):
 @app.get("/")
 def read_root():
     """A simple health check endpoint to verify the API is running."""
-    return {"status": "API is running", "model_loaded": model is not None}
+    return {"status": "API is running"}
 
 # This block allows you to run the API directly for testing.
-# Command: python app.py
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
