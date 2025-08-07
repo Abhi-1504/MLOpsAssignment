@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 pandas
 numpy
 scikit-learn
@@ -8,3 +9,14 @@ uvicorn[standard]
 pydantic
 requests
 
+=======
+scikit-learn== 1.6.1
+mlflow== 2.18.0
+flask== 3.1.0
+pandas== 2.3.1
+numpy== 1.26.4
+pydantic== 2.11.7
+pytest== 8.4.1
+black== 24.8.0
+flake8== 7.0.0
+>>>>>>> 00df1927d4e25741b6b49e9f75a77c3b3f058e03
