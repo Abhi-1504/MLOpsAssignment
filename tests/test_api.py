@@ -16,9 +16,6 @@ from src.datamodels import HouseFeatures
 
 # --- 1. API Integration Test ---
 
-# Create a TestClient instance for our FastAPI app
-client = TestClient(app)
-
 def test_predict_endpoint_success(mocker):
     """
     Tests if the /predict endpoint returns a successful response (status code 200)
@@ -30,13 +27,16 @@ def test_predict_endpoint_success(mocker):
     # Configure the predict method to return a predictable value
     mock_model.predict.return_value = [250000.0] 
     
-    # Replace the real `mlflow.pyfunc.load_model` with our fake model
-    # The path 'src.app.mlflow.pyfunc.load_model' points to where the function is used.
+    # Replace the real `mlflow.pyfunc.load_model` with a mock that returns our fake model.
+    # This prevents the app from trying to connect to a real MLflow server during the test.
     mocker.patch('src.app.mlflow.pyfunc.load_model', return_value=mock_model)
     
-    # We also need to mock the model object within the app itself for the test client
+    # We also need to directly set the model on the app instance for the test.
     app.model = mock_model
     # --- END MOCKING ---
+
+    # Create a TestClient instance for our FastAPI app AFTER mocking is set up.
+    client = TestClient(app)
 
     # Define a valid sample payload
     sample_payload = {
@@ -57,14 +57,9 @@ def test_predict_endpoint_success(mocker):
     # Assert that the status code is 200 (OK)
     assert response.status_code == 200
     
-    # Assert that the response is a JSON object
+    # Assert that the response is a JSON object and contains the correct prediction
     response_json = response.json()
-    assert isinstance(response_json, dict)
-    
-    # Assert that the prediction key is in the response
     assert "predicted_median_house_value" in response_json
-    
-    # Assert that the prediction value is the one we set in our mock
     assert response_json["predicted_median_house_value"] == 250000.0
 
 def test_predict_endpoint_invalid_input():
@@ -72,6 +67,7 @@ def test_predict_endpoint_invalid_input():
     Tests if the /predict endpoint correctly returns a 422 Unprocessable Entity
     error when a required field is missing.
     """
+    client = TestClient(app)
     # Define a payload with a missing 'ocean_proximity' field
     invalid_payload = {
         "longitude": -122.23,
