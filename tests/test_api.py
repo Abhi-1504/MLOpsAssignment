@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 import pandas as pd
 import sys
 import os
+from unittest.mock import MagicMock
 
 # Add the root directory of the project to the Python path
 # This allows us to import modules from the 'src' directory
@@ -18,11 +19,25 @@ from src.datamodels import HouseFeatures
 # Create a TestClient instance for our FastAPI app
 client = TestClient(app)
 
-def test_predict_endpoint_success():
+def test_predict_endpoint_success(mocker):
     """
     Tests if the /predict endpoint returns a successful response (status code 200)
-    with valid input data.
+    with valid input data. This test mocks the MLflow model loading.
     """
+    # --- MOCKING THE MODEL ---
+    # Create a fake model object with a predict method
+    mock_model = MagicMock()
+    # Configure the predict method to return a predictable value
+    mock_model.predict.return_value = [250000.0] 
+    
+    # Replace the real `mlflow.pyfunc.load_model` with our fake model
+    # The path 'src.app.mlflow.pyfunc.load_model' points to where the function is used.
+    mocker.patch('src.app.mlflow.pyfunc.load_model', return_value=mock_model)
+    
+    # We also need to mock the model object within the app itself for the test client
+    app.model = mock_model
+    # --- END MOCKING ---
+
     # Define a valid sample payload
     sample_payload = {
         "longitude": -122.23,
@@ -49,8 +64,8 @@ def test_predict_endpoint_success():
     # Assert that the prediction key is in the response
     assert "predicted_median_house_value" in response_json
     
-    # Assert that the prediction value is a number (float or int)
-    assert isinstance(response_json["predicted_median_house_value"], (float, int))
+    # Assert that the prediction value is the one we set in our mock
+    assert response_json["predicted_median_house_value"] == 250000.0
 
 def test_predict_endpoint_invalid_input():
     """
