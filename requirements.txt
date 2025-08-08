@@ -7,4 +7,5 @@ fastapi
 uvicorn[standard]
 pydantic
 requests
-
+httpx
+pytest-mock
