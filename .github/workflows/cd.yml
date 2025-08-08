@@ -11,6 +11,7 @@ on:
       - 'Dockerfile'
       - '.github/workflows/cd.yml' # Redeploy if the deployment workflow itself changes
 
+      
 jobs:
   build-and-push:
     # This job runs on a standard GitHub-hosted runner
