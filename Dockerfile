@@ -9,8 +9,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Application Code
-COPY app.py .
-COPY datamodels.py .
+COPY src/app.py .
+COPY src/datamodels.py .
 
 # Expose Port
 EXPOSE 8000
