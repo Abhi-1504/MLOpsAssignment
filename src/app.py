@@ -6,25 +6,30 @@ from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 import os
 import logging
+from prometheus_fastapi_instrumentator import Instrumentator
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging to write to a file named 'predictions.log'
+logging.basicConfig(
+    level=logging.INFO,
+    filename="predictions.log",
+    filemode="a", # 'a' for append
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 model = None  # Declare model globally
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager"""
-    # Startup
+    """Application lifespan manager to load the model on startup."""
     global model
     
-    # Set MLflow tracking URI to your server
-    mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://13.51.85.124:1234")
+    # Set MLflow tracking URI
+    mlflow_tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
     mlflow.set_tracking_uri(mlflow_tracking_uri)
     
     model_name = "best_model_auto"
-    model_stage = "Staging"
+    model_stage = "Staging" # Using Staging as the dev environment
     model_uri = f"models:/{model_name}/{model_stage}"
     
     try:
@@ -48,14 +53,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Instrument the app with Prometheus to expose a /metrics endpoint
+Instrumentator().instrument(app).expose(app)
+
 def create_ratio_features(df):
     """Creates new ratio-based features for prediction."""
     df_copy = df.copy()
-    
-    # Avoid division by zero
     df_copy["rooms_per_household"] = df_copy["total_rooms"] / df_copy["households"].replace(0, 1)
     df_copy["bedrooms_per_room"] = df_copy["total_bedrooms"] / df_copy["total_rooms"].replace(0, 1)
-    
     return df_copy
 
 @app.post("/predict")
@@ -68,14 +73,12 @@ async def predict(features: HouseFeatures):
         )
     
     try:
-        # Convert pydantic model to dataframe
         input_df = pd.DataFrame([features.model_dump()])
-        
-        # Apply feature engineering
         input_df = create_ratio_features(input_df)
-        
-        # Make prediction
         prediction = model.predict(input_df)
+        
+        # Log the successful prediction request and its output
+        logger.info(f"Prediction successful. Input: {features.model_dump_json()}, Output: {float(prediction[0])}")
         
         return {"predicted_median_house_value": float(prediction[0])}
         
