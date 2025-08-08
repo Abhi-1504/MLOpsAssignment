@@ -126,6 +126,8 @@ def test_house_features_validation():
 
 def test_house_features_invalid_ocean_proximity():
     """Test validation with invalid ocean_proximity value"""
+    from pydantic import ValidationError
+    
     invalid_data = {
         "longitude": -122.23,
         "latitude": 37.88,
@@ -138,7 +140,7 @@ def test_house_features_invalid_ocean_proximity():
         "ocean_proximity": "INVALID_VALUE"  # This should be invalid
     }
     
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationError):
         HouseFeatures(**invalid_data)
 
 # --- 4. Additional Tests (improvements over original) ---
@@ -207,11 +209,13 @@ def test_feature_engineering_edge_cases():
 
 def test_house_features_missing_required_field():
     """Test validation with missing required field"""
+    from pydantic import ValidationError
+    
     incomplete_data = {
         "longitude": -122.23,
         "latitude": 37.88,
         # Missing other required fields
     }
     
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationError):
         HouseFeatures(**incomplete_data)

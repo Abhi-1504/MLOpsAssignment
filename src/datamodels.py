@@ -1,42 +1,35 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Literal
 
-
-# datamodel for predict endpoint
 class HouseFeatures(BaseModel):
-    longitude: float = Field(
-        ...,
-        description="Longitude of the house location (West is negative).",
-        example=-122.23,
+    """
+    Data model for housing features used in prediction.
+    """
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "longitude": -122.23,
+                "latitude": 37.88,
+                "housing_median_age": 41.0,
+                "total_rooms": 880.0,
+                "total_bedrooms": 129.0,
+                "population": 322.0,
+                "households": 126.0,
+                "median_income": 8.3252,
+                "ocean_proximity": "NEAR BAY"
+            }
+        }
     )
-    latitude: float = Field(
-        ...,
-        description="Latitude of the house location (North is positive).",
-        example=37.88,
-    )
-    housing_median_age: float = Field(
-        ..., description="Median age of a house within a block.", example=41.0
-    )
-    total_rooms: float = Field(
-        ..., description="Total number of rooms within a block.", example=880.0
-    )
-    total_bedrooms: float = Field(
-        ..., description="Total number of bedrooms within a block.", example=129.0
-    )
-    population: float = Field(
-        ...,
-        description="Total number of people residing within a block.",
-        example=322.0,
-    )
-    households: float = Field(
-        ...,
-        description="Total number of households, a group of people residing within a home unit, for a block.",
-        example=126.0,
-    )
-    median_income: float = Field(
-        ...,
-        description="Median income for households within a block (in tens of thousands of US Dollars).",
-        example=8.3252,
-    )
-    ocean_proximity: str = Field(
-        ..., description="Location of the house w.r.t ocean/sea.", example="NEAR BAY"
+    
+    longitude: float = Field(..., description="Longitude coordinate")
+    latitude: float = Field(..., description="Latitude coordinate") 
+    housing_median_age: float = Field(..., description="Median age of housing in the area")
+    total_rooms: float = Field(..., description="Total number of rooms")
+    total_bedrooms: float = Field(..., description="Total number of bedrooms")
+    population: float = Field(..., description="Population in the area")
+    households: float = Field(..., description="Number of households")
+    median_income: float = Field(..., description="Median income in the area")
+    ocean_proximity: Literal["NEAR BAY", "NEAR OCEAN", "<1H OCEAN", "INLAND", "ISLAND"] = Field(
+        ..., 
+        description="Proximity to ocean"
     )
