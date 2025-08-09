@@ -37,7 +37,7 @@ jobs:
   deploy:
       # This job depends on the 'build-and-push' job completing successfully
     needs: build-and-push
-    runs-on: self-hosted # This runs on your EC2 instance
+    runs-on: self-hosted # This runs on the EC2 instance
 
     steps:
       # Step 1: Checkout the latest code to get the new docker-compose.yml
@@ -51,4 +51,6 @@ jobs:
       # Step 3: Deploy the entire stack using Docker Compose
       # This command will only restart the services whose images have changed.
       - name: Deploy with Docker Compose
-        run: docker-compose up -d
+        run: |
+          export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          docker-compose up -d
