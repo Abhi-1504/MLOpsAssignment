@@ -3,7 +3,7 @@ services:
   # The FastAPI Application Service
   housing-api:
     # Use the image that your CI/CD pipeline pushes to Docker Hub
-    image: ${{ secrets.DOCKERHUB_USERNAME }}/housing-api:latest
+    image: ${DOCKERHUB_USERNAME}/housing-api:latest
     restart: always
     ports:
       - "8000:8000"
