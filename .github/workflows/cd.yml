@@ -44,13 +44,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Pull the latest API image from Docker Hub
+      # Step 2: Stop and remove existing containers
+      - name: Stop existing containers
+        run: |
+          export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          docker-compose down || true
+
+      # Step 3: Pull the latest API image from Docker Hub
       - name: Pull latest housing-api image
         run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/housing-api:latest
 
-      # Step 3: Deploy the entire stack using Docker Compose
-      # This command will only restart the services whose images have changed.
+      # Step 4: Deploy the entire stack using Docker Compose
+      # This command will start fresh containers with the new image
       - name: Deploy with Docker Compose
         run: |
           export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
           docker-compose up -d
+
+      # Step 5: Clean up unused images to save space
+      - name: Clean up unused Docker images
+        run: docker image prune -f
