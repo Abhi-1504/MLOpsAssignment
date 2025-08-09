@@ -9,9 +9,7 @@ services:
       - "8000:8000"
     environment:
       # The API needs to know where the MLflow server is (running on the host)
-      - MLFLOW_TRACKING_URI=http://127.0.0.1:5000
-    # This is required for the container to reach the MLflow server on the host machine
-    network_mode: "host"
+      - MLFLOW_TRACKING_URI=http://host.docker.internal:5000
 
   # The Prometheus Monitoring Service
   prometheus:
