@@ -1,27 +1,24 @@
-name: CD - Build and Deploy Application
+name: CD - Build and Deploy Application Stack
 
-# Trigger this workflow on a push to the main branch ONLY if specific files are changed.
 on:
   push:
     branches: [ main ]
     paths:
-      - 'src/app.py'
-      - 'src/datamodels.py'
+      - 'src/**'
       - 'requirements.txt'
       - 'Dockerfile'
+      - 'docker-compose.yml' # Trigger on infrastructure changes
+      - 'prometheus.yml'     # Trigger on infrastructure changes
       - '.github/workflows/cd.yml' # Redeploy if the deployment workflow itself changes
-    
+
 jobs:
   build-and-push:
     # This job runs on a standard GitHub-hosted runner
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Check out the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Log in to Docker Hub
       # This uses secrets to securely log in without exposing your credentials.
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -29,7 +26,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Step 3: Build the Docker image and push it to Docker Hub
+      # Build the Docker image and push it to Docker Hub
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
@@ -38,30 +35,20 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/housing-api:latest
 
   deploy:
-    # This job depends on the 'build-and-push' job completing successfully
+      # This job depends on the 'build-and-push' job completing successfully
     needs: build-and-push
-    
-    # CRITICAL: This job runs on your self-hosted runner on the EC2 instance
-    runs-on: self-hosted
+    runs-on: self-hosted # This runs on your EC2 instance
 
     steps:
-      # Step 1: Pull the latest image from Docker Hub
-      # This ensures we are using the image we just built.
-      - name: Pull latest Docker image
+      # Step 1: Checkout the latest code to get the new docker-compose.yml
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Pull the latest API image from Docker Hub
+      - name: Pull latest housing-api image
         run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/housing-api:latest
 
-      # Step 2: Stop and remove the old container if it exists
-      # The '|| true' part ensures the workflow doesn't fail if the container isn't running.
-      - name: Stop and remove existing container
-        run: |
-          docker stop housing-api-container || true
-          docker rm housing-api-container || true
-
-      # Step 3: Run the new container
-      # This is the final deployment step. It starts your API with the new image.
-      - name: Run new Docker container
-        run: |
-          docker run -d --network="host" \
-            -e MLFLOW_TRACKING_URI='http://127.0.0.1:5000' \
-            --name housing-api-container \
-            ${{ secrets.DOCKERHUB_USERNAME }}/housing-api:latest
+      # Step 3: Deploy the entire stack using Docker Compose
+      # This command will only restart the services whose images have changed.
+      - name: Deploy with Docker Compose
+        run: docker-compose up -d
