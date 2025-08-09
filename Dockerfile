@@ -16,8 +16,8 @@ ENV PYTHONPATH="${PYTHONPATH}:/app"
 # Expose Port
 EXPOSE 8000
 
-# Set MLflow Tracking URI
-ENV MLFLOW_TRACKING_URI=http://127.0.0.1:5000
+# Set default MLflow Tracking URI for Ubuntu (will be overridden by docker-compose)
+ENV MLFLOW_TRACKING_URI=http://172.17.0.1:5000
 
-# --- FIX: Update the run command to point to the module ---
+# Run the FastAPI application
 CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]

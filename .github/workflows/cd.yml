@@ -44,6 +44,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 1.5: Kill any existing uvicorn processes that might be using port 8000
+      - name: Kill existing uvicorn processes
+        run: sudo pkill -f uvicorn || true
+
       # Step 2: Stop and remove existing containers
       - name: Stop existing containers
         run: |
