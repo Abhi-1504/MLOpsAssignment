@@ -5,11 +5,10 @@ services:
     # Use the image that your CI/CD pipeline pushes to Docker Hub
     image: ${DOCKERHUB_USERNAME}/housing-api:latest
     restart: always
-    ports:
-      - "8000:8000"
     environment:
       # The API needs to know where the MLflow server is (running on the host)
-      - MLFLOW_TRACKING_URI=http://host.docker.internal:5000
+      - MLFLOW_TRACKING_URI=http://127.0.0.1:5000
+    network_mode: "host"
 
   # The Prometheus Monitoring Service
   prometheus:
