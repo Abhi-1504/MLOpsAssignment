@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  # The FastAPI Application Service
+  housing-api:
+    # Use the image that your CI/CD pipeline pushes to Docker Hub
+    image: ${{ secrets.DOCKERHUB_USERNAME }}/housing-api:latest
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      # The API needs to know where the MLflow server is (running on the host)
+      - MLFLOW_TRACKING_URI=http://127.0.0.1:5000
+    # This is required for the container to reach the MLflow server on the host machine
+    network_mode: "host"
+
+  # The Prometheus Monitoring Service
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    volumes:
+      # Mount the configuration file into the container
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  # The Grafana Dashboard Service
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+      - "3000:3000"
