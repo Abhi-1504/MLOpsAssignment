@@ -45,7 +45,7 @@ jobs:
 
     - name: Restart API service
       run: |
-        cd /home/ubuntu/mlops
+        cd /home/ubuntu/MLOpsAssignment
         docker-compose stop housing-api
         docker-compose up -d housing-api
         sleep 10
