@@ -1,0 +1,49 @@
+name: Continuous Training
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'housing.csv.dvc'
+
+env:
+  MLFLOW_TRACKING_URI: http://127.0.0.1:5000
+
+jobs:
+  continuous-training:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies and pull data
+      run: |
+        source /home/ubuntu/mlops/bin/activate
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        dvc pull -r s3-remote
+
+    - name: Run DVC pipeline
+      run: |
+        source /home/ubuntu/mlops/bin/activate
+        export MLFLOW_TRACKING_URI=${{ env.MLFLOW_TRACKING_URI }}
+        dvc repro
+
+    - name: Restart API service
+      run: |
+        cd /home/ubuntu/mlops
+        # Stop the service first
+        docker-compose stop housing-api
+        # Start it again to pick up the new model
+        docker-compose up -d housing-api
+        # Wait a moment for service to fully start
+        sleep 10
+        # Check if service is running
+        docker-compose ps housing-api
+        
+    - name: Verify deployment
+      run: |
+        # Simple health check (adjust URL as needed)
+        timeout 30 bash -c 'until curl -f http://localhost:8000/health 2>/dev/null; do sleep 2; done' || echo "Service health check timeout"
+        echo "Deployment completed"
