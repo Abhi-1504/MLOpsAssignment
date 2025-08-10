@@ -27,7 +27,7 @@ stages:
       - models
 
   register:
-    cmd: python src/register_model.py --model_name housing_price_predictor
+    cmd: python src/register_model.py --model_name best_model_auto
     deps:
       - src/register_model.py
       - models
