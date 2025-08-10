@@ -13,7 +13,7 @@ This repo contains the code base for MLOPs assignment by Group 31
 
 ## Overview
 
-This project demonstrates a minimal but complete MLOps pipeline for a machine learning model using the California Housing dataset. The pipeline covers data versioning, experiment tracking, model packaging, CI/CD, deployment, and monitoring.
+This project demonstrates a minimal but complete MLOps pipeline for a machine learning model using the California Housing dataset. The pipeline covers data versioning, experiment tracking, model packaging, CI/CD/CT, deployment, and monitoring.
 
 ---
 
@@ -75,7 +75,6 @@ This project demonstrates a minimal but complete MLOps pipeline for a machine le
 
 - All prediction requests and outputs logged to file.
 - Prometheus scrapes API metrics; Grafana dashboards visualize them.
-- Optional: SQLite for storing logs.
 
 ### 6. Automated Retraining
 
@@ -95,15 +94,6 @@ This project demonstrates a minimal but complete MLOps pipeline for a machine le
 4. **Push code and DVC hashes to GitHub.**
 5. **CI/CD pipeline handles testing, building, and deployment.**
 6. **API is available for predictions; monitoring available via Grafana.**
-
----
-
-## Deliverables
-
-- **GitHub Repo:** [your-repo-link]
-- **Docker Hub Image:** [your-dockerhub-link]
-- **Summary Document:** See `summary.pdf`
-- **Demo Video:** See `demo.mp4`
 
 ---
 
