@@ -2,6 +2,9 @@
 This repo contains the code base for MLOPs assignment by Group 31
 ---
 
+## Contributors:
+
+
 ## Overview
 
 This project demonstrates a minimal but complete MLOps pipeline for a machine learning model using the California Housing dataset. The pipeline covers data versioning, experiment tracking, model packaging, CI/CD, deployment, and monitoring.
