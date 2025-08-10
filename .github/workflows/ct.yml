@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'housing.csv.dvc'
+      - 'data/raw/housing.csv.dvc'
 
 env:
   MLFLOW_TRACKING_URI: http://127.0.0.1:5000
