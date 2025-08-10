@@ -73,7 +73,6 @@ def preprocess_data(raw_data_path, processed_data_path):
     # Fit and save the preprocessor
     preprocessor.fit(X_train)
     os.makedirs(processed_data_path, exist_ok=True)
-    joblib.dump(preprocessor, os.path.join(processed_data_path, 'preprocessor.pkl'))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

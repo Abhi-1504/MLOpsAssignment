@@ -1,134 +1,127 @@
+import os
 import pandas as pd
 import numpy as np
-import joblib
 import mlflow
 import mlflow.sklearn
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import time
+import psutil
 import json
-import os
+import joblib
 import argparse
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+from mlflow.models.signature import ModelSignature
+from mlflow.types.schema import Schema, ColSpec
 
 def train_model(processed_data_path, model_output_path):
     """
-    Train the housing price prediction model using preprocessed data
+    Loads processed data, defines a full preprocessing and model pipeline,
+    trains it, evaluates it, and logs everything to MLflow.
     """
-    # Enable system metrics tracking (matching experimentation notebook)
+    print("--- Starting model training stage ---")
+
+    # Enable automatic logging of system resource usage
     mlflow.system_metrics.enable_system_metrics_logging()
     
-    # Set MLflow experiment (EXACT SAME NAME as experimentation)
-    mlflow.set_experiment("MLOPs Assignment - Housing Price Prediction")
-    
-    # Load processed data
+    # Load processed data (which includes engineered features)
     X_train = pd.read_csv(os.path.join(processed_data_path, 'X_train.csv'))
     X_test = pd.read_csv(os.path.join(processed_data_path, 'X_test.csv'))
     y_train = pd.read_csv(os.path.join(processed_data_path, 'y_train.csv')).values.ravel()
     y_test = pd.read_csv(os.path.join(processed_data_path, 'y_test.csv')).values.ravel()
-    
-    # Load the fitted preprocessor
-    preprocessor = joblib.load(os.path.join(processed_data_path, 'preprocessor.pkl'))
-    
-    # Transform the data using the fitted preprocessor
-    X_train_processed = preprocessor.transform(X_train)
-    X_test_processed = preprocessor.transform(X_test)
-    
-    # Start MLflow run with descriptive name
-    with mlflow.start_run(run_name="automated_retraining_decision_tree"):
-        # Log dataset info
-        mlflow.log_param("dataset_size", len(X_train))
-        mlflow.log_param("n_features", X_train_processed.shape[1])
-        mlflow.log_param("test_size", 0.2)
+
+    # Define the preprocessing steps for the pipeline
+    numeric_features = X_train.select_dtypes(include=np.number).columns.tolist()
+    categorical_features = ['ocean_proximity']
+
+    numeric_transformer = SimpleImputer(strategy='median')
+    categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numeric_transformer, numeric_features),
+            ('cat', categorical_transformer, categorical_features)
+        ],
+        remainder='passthrough' # Use passthrough to keep all columns
+    )
+
+    # Use the best hyperparameters found during experimentation
+    best_params = {'max_depth': 10, 'min_samples_leaf': 10}
+
+    with mlflow.start_run(run_name="Automated_Retraining_Pipeline"):
+        mlflow.set_experiment("MLOPs Assignment - Housing Price Prediction")
+        
+        # Log parameters for this run
+        mlflow.log_param("model_type", "DecisionTreeRegressor")
+        mlflow.log_params(best_params)
         mlflow.log_param("training_data_shape", X_train.shape)
+        mlflow.log_param("cpu_count", psutil.cpu_count())
         
-        # Train the model (matching experimentation best params)
-        model = DecisionTreeRegressor(random_state=42)
-        
-        # Track training time (matching experimentation format)
-        import time
-        start_time = time.time()
-        model.fit(X_train_processed, y_train)
-        end_time = time.time()
-        training_duration = end_time - start_time
-        
-        # Make predictions
-        y_pred = model.predict(X_test_processed)
-        
-        # Calculate metrics
-        mse = mean_squared_error(y_test, y_pred)
-        rmse = np.sqrt(mse)
-        mae = mean_absolute_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
-        
-        # Log model parameters (matching experimentation format)
-        mlflow.log_param("model_type", "DecisionTree")
-        mlflow.log_param("random_state", 42)
-        mlflow.log_param("max_depth", None)  # Default value
-        mlflow.log_param("min_samples_leaf", 1)  # Default value
-        mlflow.log_param("preprocessing", "ColumnTransformer_with_feature_engineering")
-        
-        # Log metrics (matching experimentation format)
-        mlflow.log_metrics({
-            "rmse": rmse,
-            "mae": mae,
-            "r2_score": r2,
-            "training_duration_sec": training_duration
-        })
-        
-        # Log additional tags for pipeline identification (matching experimentation)
+        # Add descriptive tags
         mlflow.set_tag("model_family", "Tree")
-        mlflow.set_tag("experiment_type", "Automated_Pipeline")
-        mlflow.set_tag("pipeline_stage", "automated_retraining")
-        mlflow.set_tag("model_purpose", "production_candidate")
-        mlflow.set_tag("data_version", "latest")
+        mlflow.set_tag("pipeline_type", "Automated Retraining")
+
+        # Define the full model pipeline, bundling preprocessing and the model
+        pipeline = Pipeline([
+            ('preprocessor', preprocessor),
+            ('regressor', DecisionTreeRegressor(random_state=42, **best_params))
+        ])
+
+        # Train the model and track duration
+        start_time = time.time()
+        pipeline.fit(X_train, y_train)
+        training_duration = time.time() - start_time
         
-        # Create output directory
-        os.makedirs(model_output_path, exist_ok=True)
+        # Evaluate the model on the test set
+        y_pred = pipeline.predict(X_test)
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+        r2 = r2_score(y_test, y_pred)
+
+        # Log metrics to MLflow
+        mlflow.log_metric("rmse", rmse)
+        mlflow.log_metric("r2_score", r2)
+        mlflow.log_metric("training_duration_sec", training_duration)
+
+        print(f"Training complete. RMSE: {rmse:.2f}, R2 Score: {r2:.2f}")
+
+        # Define Model Signature based on the raw input format
+        input_schema = Schema([
+            ColSpec("double", "longitude"), ColSpec("double", "latitude"),
+            ColSpec("double", "housing_median_age"), ColSpec("double", "total_rooms"),
+            ColSpec("double", "total_bedrooms"), ColSpec("double", "population"),
+            ColSpec("double", "households"), ColSpec("double", "median_income"),
+            ColSpec("string", "ocean_proximity"),
+            ColSpec("double", "rooms_per_household"), ColSpec("double", "bedrooms_per_room"),
+        ])
+        output_schema = Schema([ColSpec("double")])
+        signature = ModelSignature(inputs=input_schema, outputs=output_schema)
         
-        # Save model locally
-        model_path = os.path.join(model_output_path, 'model.pkl')
-        joblib.dump(model, model_path)
-        
-        # Log model to MLflow with the same name as experimentation
-        model_info = mlflow.sklearn.log_model(
-            model, 
-            "model",  # Match artifact name from experimentation
+        # Log the entire pipeline to MLflow
+        mlflow.sklearn.log_model(
+            sk_model=pipeline,
+            artifact_path="model",
+            signature=signature,
             registered_model_name="best_model_auto"
         )
+        print("Full model pipeline saved and registered to MLflow as 'best_model_auto'")
+
+        # Save local outputs for DVC to track
+        os.makedirs(model_output_path, exist_ok=True)
+        joblib.dump(pipeline, os.path.join(model_output_path, "model.pkl"))
         
-        # Log model URI for reference
-        mlflow.log_param("model_uri", model_info.model_uri)
+        metrics = {"rmse": rmse, "r2_score": r2}
+        with open("metrics.json", "w") as f:
+            json.dump(metrics, f)
         
-        # Save metrics to file for DVC tracking
-        metrics = {
-            "rmse": float(rmse),
-            "mae": float(mae),
-            "r2_score": float(r2),
-            "training_duration_sec": float(training_duration),
-            "model_uri": model_info.model_uri,
-            "run_id": mlflow.active_run().info.run_id
-        }
-        
-        with open('metrics.json', 'w') as f:
-            json.dump(metrics, f, indent=4)
-        
-        print("Model training completed successfully!")
-        print(f"Experiment: MLOPs Assignment - Housing Price Prediction")
-        print(f"Run ID: {mlflow.active_run().info.run_id}")
-        print(f"RMSE: {rmse:.2f}")
-        print(f"MAE: {mae:.2f}")
-        print(f"R² Score: {r2:.4f}")
-        print(f"Training Duration: {training_duration:.2f}s")
-        print(f"Model saved to: {model_path}")
-        print(f"Model URI: {model_info.model_uri}")
-        print("System metrics logging enabled")
-        
-        return model_path
+        print("Local model and metrics files saved for DVC tracking.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Train housing price prediction model')
-    parser.add_argument('--processed_data', required=True, help='Path to processed data directory')
-    parser.add_argument('--model_output', required=True, help='Path to save trained model')
-    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--processed_data", type=str, required=True)
+    parser.add_argument("--model_output", type=str, required=True)
     args = parser.parse_args()
     
     train_model(args.processed_data, args.model_output)
