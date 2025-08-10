@@ -34,18 +34,15 @@ def train_model(processed_data_path, model_output_path):
     y_test = pd.read_csv(os.path.join(processed_data_path, 'y_test.csv')).values.ravel()
 
     # Define the preprocessing steps for the pipeline
-    numeric_features = X_train.select_dtypes(include=np.number).columns.tolist()
+    numeric_features = X_train.select_dtypes(include=np.number).columns.tolist() + ['rooms_per_household', 'bedrooms_per_room']
     categorical_features = ['ocean_proximity']
-
-    numeric_transformer = SimpleImputer(strategy='median')
-    categorical_transformer = OneHotEncoder(handle_unknown='ignore')
 
     preprocessor = ColumnTransformer(
         transformers=[
-            ('num', numeric_transformer, numeric_features),
-            ('cat', categorical_transformer, categorical_features)
+            ('num', SimpleImputer(strategy='median'), numeric_features),
+            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
         ],
-        remainder='passthrough' # Use passthrough to keep all columns
+        remainder='drop'
     )
 
     # Use the best hyperparameters found during experimentation
