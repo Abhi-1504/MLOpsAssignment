@@ -1,0 +1,57 @@
+name: CT - Retrain Model on New Data
+
+# Trigger this workflow on a push to the main branch ONLY if the DVC pointer for raw data changes.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'data/raw/housing.csv.dvc'
+
+jobs:
+  retrain-and-register:
+    # This job must run on EC2 instance where DVC and MLflow are configured.
+    runs-on: self-hosted
+
+    # Set the MLflow tracking URI for all steps in this job
+    env:
+      MLFLOW_TRACKING_URI: http://127.0.0.1:5000
+
+    steps:
+      # Step 1: Check out the latest code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      # Step 3: Install dependencies inside the correct virtual environment
+      - name: Install dependencies
+        run: |
+          source /home/ubuntu/mlops/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Pull the new data from S3
+      # This command reads the updated .dvc file and downloads the new dataset.
+      - name: Pull new data with DVC
+        run: |
+          source /home/ubuntu/mlops/bin/activate
+          dvc pull -r s3-remote
+
+      # Step 5: Reproduce the DVC pipeline
+      # DVC will see that the data has changed
+      # and automatically re-run the 'preprocess', 'train', and 'register' stages.
+      - name: Run DVC pipeline
+        run: |
+          source /home/ubuntu/mlops/bin/activate
+          dvc repro
+
+      # Step 6: Trigger API Redeployment
+      # This restarts your application stack to use the newly promoted model.
+      - name: Restart API Service with Docker Compose
+        run: |
+          export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          docker-compose up -d
