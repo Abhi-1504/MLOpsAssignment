@@ -19,6 +19,9 @@ This project demonstrates a minimal but complete MLOps pipeline for a machine le
 
 ## Architecture
 
+### Architecture Block Diagram
+![Architecture Diagram](./architecture.jpg)
+
 - **Local (Dev):** Experimentation, data versioning, and initial model development.
 - **Staging (EC2):** Centralized MLflow tracking, model registry, API deployment, monitoring, and CI/CD runner.
 - **Data Storage:** S3 bucket for DVC-tracked data and MLflow artifacts.
