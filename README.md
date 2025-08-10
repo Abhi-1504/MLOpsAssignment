@@ -108,6 +108,7 @@ This project demonstrates a minimal but complete MLOps pipeline for a machine le
 ## Credits
 
 - California Housing dataset (public domain)
+- Amazon Web Services(AWS)
 - Open-source tools: DVC, MLflow, FastAPI, Docker, Prometheus, Grafana
 
 ---
