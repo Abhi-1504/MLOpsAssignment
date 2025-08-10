@@ -111,16 +111,16 @@ def train_model(processed_data_path, model_output_path):
         with open('metrics.json', 'w') as f:
             json.dump(metrics, f, indent=4)
         
-        print("✅ Model training completed successfully!")
-        print(f"🧪 Experiment: MLOPs Assignment - Housing Price Prediction")
-        print(f"🏃 Run ID: {mlflow.active_run().info.run_id}")
-        print(f"📊 RMSE: {rmse:.2f}")
-        print(f"📊 MAE: {mae:.2f}")
-        print(f"📊 R² Score: {r2:.4f}")
-        print(f"⏱️ Training Duration: {training_duration:.2f}s")
-        print(f"💾 Model saved to: {model_path}")
-        print(f"🔗 Model URI: {model_info.model_uri}")
-        print("📈 System metrics logging enabled")
+        print("Model training completed successfully!")
+        print(f"Experiment: MLOPs Assignment - Housing Price Prediction")
+        print(f"Run ID: {mlflow.active_run().info.run_id}")
+        print(f"RMSE: {rmse:.2f}")
+        print(f"MAE: {mae:.2f}")
+        print(f"R² Score: {r2:.4f}")
+        print(f"Training Duration: {training_duration:.2f}s")
+        print(f"Model saved to: {model_path}")
+        print(f"Model URI: {model_info.model_uri}")
+        print("System metrics logging enabled")
         
         return model_path
 

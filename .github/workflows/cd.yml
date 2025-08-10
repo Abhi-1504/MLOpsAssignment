@@ -4,7 +4,8 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'src/**'
+      - 'src/app.py'
+      - 'src/datamodels.py'
       - 'requirements.txt'
       - 'Dockerfile'
       - 'docker-compose.yml' # Trigger on infrastructure changes
