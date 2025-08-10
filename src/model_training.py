@@ -37,13 +37,7 @@ def train_model(processed_data_path, model_output_path):
     numeric_features = X_train.select_dtypes(include=np.number).columns.tolist() + ['rooms_per_household', 'bedrooms_per_room']
     categorical_features = ['ocean_proximity']
 
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', SimpleImputer(strategy='median'), numeric_features),
-            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
-        ],
-        remainder='drop'
-    )
+    preprocessor = joblib.load(os.path.join(processed_data_path, 'preprocessor.pkl'))
 
     # Use the best hyperparameters found during experimentation
     best_params = {'max_depth': 10, 'min_samples_leaf': 10}
