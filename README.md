@@ -3,6 +3,12 @@ This repo contains the code base for MLOPs assignment by Group 31
 ---
 
 ## Contributors:
+| Member Name        | BITS ID      | Contribution |
+|--------------------|--------------|--------------|
+| Abhilash Raj       | 2023AC05043  | 100%         |
+| Swapnanil Seal     | 2023AC05013  | 100%         |
+| Anurag Sujan       | 2023AC05003  | 100%         |
+| Manoj Kumar Sharma | 2023AC05845  | 100%         |
 
 
 ## Overview
