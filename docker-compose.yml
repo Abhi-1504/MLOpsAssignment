@@ -2,7 +2,11 @@ version: '3.8'
 services:
   # The FastAPI Application Service
   housing-api:
-    image: ${DOCKERHUB_USERNAME}/housing-api:latest
+    # Try to use the image from registry, fallback to building locally
+    image: ${DOCKERHUB_USERNAME:-local}/housing-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "8000:8000"

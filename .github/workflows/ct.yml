@@ -43,12 +43,29 @@ jobs:
         # Push the newly generated outputs back to remote
         dvc push -r myremote
 
-    - name: Restart API service
+    - name: Build and restart API service
       run: |
-        export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
         cd /home/ubuntu/MLOpsAssignment
-        docker-compose stop housing-api
+        
+        # Set environment variable for docker-compose
+        export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+        
+        # Stop existing service
+        docker-compose stop housing-api || true
+        
+        # Remove old container to avoid conflicts
+        docker-compose rm -f housing-api || true
+        
+        # Build the image locally first (as fallback)
+        docker-compose build housing-api
+        
+        # Try to pull latest image if it exists, otherwise use local build
+        docker-compose pull housing-api || echo "Could not pull image, using local build"
+        
+        # Start the service
         docker-compose up -d housing-api
+        
+        # Wait for service to be ready
         sleep 10
         docker-compose ps housing-api
         
