@@ -45,6 +45,7 @@ jobs:
 
     - name: Restart API service
       run: |
+        export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
         cd /home/ubuntu/MLOpsAssignment
         docker-compose stop housing-api
         docker-compose up -d housing-api
@@ -53,5 +54,5 @@ jobs:
         
     - name: Verify deployment
       run: |
-        timeout 30 bash -c 'until curl -f http://localhost:8000/health 2>/dev/null; do sleep 2; done' || echo "⚠️ Service health check timeout"
+        timeout 30 bash -c 'until curl -f http://localhost:8000/health 2>/dev/null; do sleep 2; done' || echo "Service health check timeout"
         echo "Deployment completed"
