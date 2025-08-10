@@ -1,0 +1,28 @@
+stages:
+  preprocess:
+    cmd: python src/data_preprocessing.py
+    deps:
+      - src/data_preprocessing.py
+      - data/raw/housing.csv
+    outs:
+      - data/processed
+
+  train:
+    cmd: python src/model_training.py
+    deps:
+      - src/model_training.py
+      - data/processed
+    params:
+      - training.seed
+      - training.max_depth
+    metrics:
+      - metrics.json:
+          cache: false
+    outs:
+      - models/
+
+  register:
+    cmd: python src/register_model.py
+    deps:
+      - src/register_model.py
+      - models/
