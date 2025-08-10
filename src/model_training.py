@@ -92,7 +92,7 @@ def train_model(processed_data_path, model_output_path):
         model_info = mlflow.sklearn.log_model(
             model, 
             "model",  # Match artifact name from experimentation
-            registered_model_name="housing_price_predictor"
+            registered_model_name="best_model_auto"
         )
         
         # Log model URI for reference
