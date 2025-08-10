@@ -1,27 +1,31 @@
 import mlflow
 from mlflow.tracking import MlflowClient
+import argparse
+import os
 
-def register_and_promote_model():
+def register_and_promote_model(model_name="housing_price_predictor"):
     """
-    Finds the latest version of the registered model and promotes
-    it to the 'Staging' environment.
+    Register and promote the best model to staging
     """
-    print("Starting model registration and promotion...")
-    
+    # Initialize MLflow client
     client = MlflowClient()
-    model_name = "best_model_auto"
     
     try:
-        # Get the latest version of the model
-        latest_versions = client.get_latest_versions(name=model_name, stages=["None"])
-        if not latest_versions:
-            print(f"No versions in 'None' stage found for model '{model_name}'.")
-            return
-            
-        model_version = latest_versions[0].version
-        print(f"Found latest version: {model_version} for model '{model_name}'.")
+        # Get all versions of the model, regardless of current stage
+        model_versions = client.search_model_versions(f"name='{model_name}'")
         
-        # Promote the model to the "Staging" stage
+        if not model_versions:
+            print(f"No versions found for model '{model_name}'")
+            return False
+        
+        # Get the latest version by version number
+        latest_version = max(model_versions, key=lambda x: int(x.version))
+        model_version = latest_version.version
+        
+        print(f"Found latest model version: {model_version}")
+        print(f"Current stage: {latest_version.current_stage}")
+        
+        # Promote to Staging
         print(f"Promoting model version {model_version} to 'Staging'...")
         client.transition_model_version_stage(
             name=model_name,
@@ -29,10 +33,27 @@ def register_and_promote_model():
             stage="Staging",
             archive_existing_versions=True
         )
-        print(f"Success! Model version {model_version} is now in the 'Staging' stage.")
-
+        
+        print(f"Model version {model_version} promoted to 'Staging' successfully!")
+        
+        # Log model details
+        model_version_details = client.get_model_version(model_name, model_version)
+        print(f"Model URI: {model_version_details.source}")
+        print(f"Run ID: {model_version_details.run_id}")
+        
+        return True
+        
     except Exception as e:
-        print(f"Error during model promotion: {e}")
+        print(f"Error during model registration and promotion: {e}")
+        return False
 
 if __name__ == "__main__":
-    register_and_promote_model()
+    parser = argparse.ArgumentParser(description='Register and promote model')
+    parser.add_argument('--model_name', default='housing_price_predictor', 
+                       help='Name of the model to register')
+    
+    args = parser.parse_args()
+    
+    success = register_and_promote_model(args.model_name)
+    if not success:
+        exit(1)

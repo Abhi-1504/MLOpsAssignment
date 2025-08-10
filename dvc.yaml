@@ -1,28 +1,34 @@
 stages:
   preprocess:
-    cmd: python src/data_preprocessing.py
+    cmd: python src/data_preprocessing.py --raw_data data/raw/housing.csv --processed_data data/processed
     deps:
       - src/data_preprocessing.py
       - data/raw/housing.csv
     outs:
-      - data/processed
+      - data/processed/X_train.csv
+      - data/processed/X_test.csv
+      - data/processed/y_train.csv
+      - data/processed/y_test.csv
+      - data/processed/preprocessor.pkl
 
   train:
-    cmd: python src/model_training.py
+    cmd: python src/model_training.py --processed_data data/processed --model_output models
     deps:
       - src/model_training.py
-      - data/processed
-    params:
-      - training.seed
-      - training.max_depth
+      - data/processed/X_train.csv
+      - data/processed/X_test.csv
+      - data/processed/y_train.csv
+      - data/processed/y_test.csv
+      - data/processed/preprocessor.pkl
     metrics:
       - metrics.json:
           cache: false
     outs:
-      - models/
+      - models
 
   register:
-    cmd: python src/register_model.py
+    cmd: python src/register_model.py --model_name housing_price_predictor
     deps:
       - src/register_model.py
-      - models/
+      - models
+      - metrics.json
