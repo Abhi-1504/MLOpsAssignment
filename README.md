@@ -37,7 +37,7 @@ This project demonstrates a minimal but complete MLOps pipeline for a machine le
 - **MLflow:** Experiment tracking, model registry, and artifact storage.
 - **FastAPI:** REST API for model inference.
 - **Docker & Docker Compose:** Containerization and orchestration.
-- **GitHub Actions:** CI/CD for linting, testing, building, and deployment.
+- **GitHub Actions:** CI/CD/CT for linting, testing, building, deployment and retraining.
 - **Prometheus & Grafana:** Monitoring and visualization.
 - **Logging:** Python logging module for request/response logging.
 
